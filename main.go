@@ -50,29 +50,36 @@ func registerProfilingHandlers(router *mux.Router) {
 }
 
 func CreateBlogPost(rw http.ResponseWriter, r *http.Request) {
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		panic(err.Error())
-	}
-
 	params := mux.Vars(r)
-
 	title, found := params["title"]
 	if !found {
 		rw.WriteHeader(http.StatusNotFound)
 		return
 	}
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		panic(err.Error())
+	}
+
+
 	dataLock.Lock()
 	defer dataLock.Unlock()
 
-	post := string(body)
-	blogPosts[title] = &Post{
-		Title:   title,
-		Content: post,
-		Time:    time.Now(),
-	}
+	post := NewPost(title, body)
+	blogPosts[title] = post
 	log.Print("Created blogpost")
 	rw.WriteHeader(http.StatusCreated)
+}
+
+func NewPost(title string, body []byte)*Post{
+	content := string(body)
+	post := &Post{
+		Title:   title,
+		Content: content,
+		Time:    time.Now(),
+	}
+	return post
 }
 
 func GetBlogPost(rw http.ResponseWriter, r *http.Request) {
